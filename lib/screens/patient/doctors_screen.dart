@@ -1,7 +1,5 @@
 // lib/screens/patient/doctors_screen.dart  — Écrans 10 & 11
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-import 'package:suivie/widgets/bot_help_button.dart';
 import '../../constants.dart';
 import '../../models.dart';
 import '../../widgets/care_bottom_nav.dart';
@@ -22,16 +20,10 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
   bool _chargement  = false;
   bool _aRecherche  = false;
   bool _showFiltres = false;
-  final List<Medecin> _contactes = [];
+  List<Medecin> _contactes = [];
   List<Medecin> _resultats = [];
-  String _specialiteChoisie = 'Mes contacts';
-  final List<String> _specialites = ['Mes contacts', 'Ophtalmologue', 'Psychiatre', 'Généraliste', 'Cardiologue', 'Pédiatre'];
-  final tous = [
-    Medecin(id: 1, nom: 'Edouard Newgate',  email: 'enewgate@care.com',  specialite: 'Ophtalmologue'),
-    Medecin(id: 2, nom: 'Marshall D Teech', email: 'mteech@care.com',    specialite: 'Psychiatre'),
-    Medecin(id: 3, nom: 'Scratchmen Apoo',  email: 'sapoo@care.com',     specialite: 'Psychiatre'),
-    Medecin(id: 4, nom: 'Usopp',            email: 'usopp@care.com',     specialite: 'Ophtalmologue'),
-  ];
+  String _specialiteChoisie = 'Toutes';
+  final List<String> _specialites = ['Toutes', 'Ophtalmologue', 'Psychiatre', 'Généraliste', 'Cardiologue', 'Pédiatre'];
 
   @override
   void initState() { super.initState(); _chargerContactes(); }
@@ -39,64 +31,30 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
   Future<void> _chargerContactes() async {
     // ════════════════════════════════════════════════════════
     // TODO: _contactes = await DatabaseService.getMedecinsContactes(Session.id);
-    //await Future.delayed(const Duration(milliseconds: 300));
-
-    final Messages = Hive.box("UserMessages");
-
-    Message? m;
-
-    for(int i = 0; i < tous.length; i++)
-      {
-        if(Messages.get("MessagesOf${Session.id}And${tous[i].id}") == null)
-          {
-            continue;
-          }
-
-        List<Message> list = Messages.get("MessagesOf${Session.id}And${tous[i].id}").cast<Message>();
-
-        if(list.isNotEmpty)
-          {
-            m = list.last;
-          }
-
-        if(m == null)
-          {
-            if(!_contactes.contains(tous[i])) {
-              _contactes.add(tous[i]);
-            }
-          }
-        else
-          {
-            if(m.dateEnvoi.compareTo(list.last.dateEnvoi) == -1)
-              {
-                if(!_contactes.contains(tous[i])) {
-                  _contactes.insert(0, tous[i]);
-                }
-              }
-            else
-              {
-                if(!_contactes.contains(tous[i])) {
-                  _contactes.add(tous[i]);
-                }
-              }
-          }
-      }
+    await Future.delayed(const Duration(milliseconds: 300));
+    _contactes = []; // vide par défaut
     // ════════════════════════════════════════════════════════
     setState(() {});
   }
 
   Future<void> _rechercher() async {
     final q = _searchCtrl.text.trim();
-    if (q.isEmpty && _specialiteChoisie == 'Mes contacts') {
+    if (q.isEmpty && _specialiteChoisie == 'Toutes') {
       setState(() { _resultats = []; _aRecherche = false; }); return;
     }
     setState(() { _chargement = true; _aRecherche = true; });
     // ════════════════════════════════════════════════════════
     // TODO: _resultats = await DatabaseService.rechercherMedecins(q, _specialiteChoisie == 'Toutes' ? null : _specialiteChoisie);
     await Future.delayed(const Duration(milliseconds: 500));
+    final tous = [
+      Medecin(id: 1, nom: 'Edouard Newgate',  email: 'enewgate@care.com',  specialite: 'Ophtalmologue'),
+      Medecin(id: 2, nom: 'Marshall D Teech', email: 'mteech@care.com',    specialite: 'Psychiatre'),
+      Medecin(id: 3, nom: 'Scratchmen Apoo',  email: 'sapoo@care.com',     specialite: 'Psychiatre'),
+      Medecin(id: 4, nom: 'Usopp',            email: 'usopp@care.com',     specialite: 'Ophtalmologue'),
+    ];
     _resultats = tous.where((m) {
       final matchQ  = q.isEmpty || m.nom.toLowerCase().contains(q.toLowerCase()) || m.specialite.toLowerCase().contains(q.toLowerCase());
-      final matchSp = _specialiteChoisie == 'Mes contacts' || m.specialite == _specialiteChoisie;
+      final matchSp = _specialiteChoisie == 'Toutes' || m.specialite == _specialiteChoisie;
       return matchQ && matchSp;
     }).toList();
     // ════════════════════════════════════════════════════════
@@ -124,13 +82,11 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(m.nom, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: kTextMain)),
           Text(m.specialite, style: const TextStyle(color: kTextSub, fontSize: 13)),
-        ])),Container(
-        width: 42, height: 42,
-        decoration: const BoxDecoration(color: kTeal, shape: BoxShape.circle),
-        child: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 18))
-      ],
+        ])),
+        const Icon(Icons.play_arrow_rounded, color: kTeal, size: 26),
+      ]),
     ),
-  ));
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -176,8 +132,8 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
                   decoration: BoxDecoration(color: const Color(0xFFF5F8F8), borderRadius: BorderRadius.circular(kRadiusBtn), border: Border.all(color: const Color(0xFFE0EEEE))),
                   child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                    Text(_specialiteChoisie == 'Mes contacts' ? 'Spécialité du medecin' : _specialiteChoisie,
-                        style: TextStyle(color: _specialiteChoisie == 'Mes contacts' ? kTextSub : kTextMain, fontSize: 14)),
+                    Text(_specialiteChoisie == 'Toutes' ? 'Spécialité du medecin' : _specialiteChoisie,
+                        style: TextStyle(color: _specialiteChoisie == 'Toutes' ? kTextSub : kTextMain, fontSize: 14)),
                     Icon(_showFiltres ? Icons.arrow_drop_up : Icons.play_arrow_rounded, color: kTeal, size: 22),
                   ]),
                 ),
@@ -187,7 +143,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                 margin: const EdgeInsets.only(top: 6),
                 decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(kRadiusSmall), boxShadow: kShadow),
                 child: Column(children: _specialites.map((s) => InkWell(
-                  onTap: () { setState(() { _specialiteChoisie = s; _showFiltres = false; }); if(_specialiteChoisie == 'Mes contacts') {_chargerContactes();} _rechercher(); },
+                  onTap: () { setState(() { _specialiteChoisie = s; _showFiltres = false; }); _rechercher(); },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
                     child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -218,7 +174,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                               borderRadius: BorderRadius.circular(kRadius),
                               child: ListView.separated(
                                 itemCount: liste.length,
-                                separatorBuilder: (_, _) => const Divider(height: 1, color: kDivider, indent: 76),
+                                separatorBuilder: (_, __) => const Divider(height: 1, color: kDivider, indent: 76),
                                 itemBuilder: (_, i) => _medecinTile(liste[i]),
                               ),
                             ),
@@ -228,7 +184,15 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
           const SizedBox(height: 8),
         ]),
       ),
-      floatingActionButton: BotButton(),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 72),
+        child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+          Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: kShadowLight),
+              child: const Text('Vous avez une question ?', style: TextStyle(fontSize: 12, color: kTextSub))),
+          const SizedBox(width: 8),
+          FloatingActionButton(heroTag: 'bot', backgroundColor: kTeal, elevation: 4, mini: true, onPressed: () {}, child: const Icon(Icons.smart_toy_rounded, color: Colors.white)),
+        ]),
+      ),
       bottomNavigationBar: CareBottomNavPatient(currentIndex: 1, onTap: _onNav),
     );
   }

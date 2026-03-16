@@ -1,13 +1,12 @@
 // lib/screens/medecin/home_screen.dart  — Écran 3
 import 'package:flutter/material.dart';
-import 'package:suivie/screens/medecin/prescription_glob.dart';
 import '../../constants.dart';
 import '../../models.dart';
-import '../../widgets/bot_help_button.dart';
 import '../../widgets/care_bottom_nav.dart';
 import '../../widgets/patient_avatar.dart';
 import 'patient_detail_screen.dart';
 import 'chat_screen.dart';
+import 'prescriptions_screen.dart';
 import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -92,11 +91,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onNav(int i) {
-    switch(i)
-    {
-      case 1: Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => PrescriptionGlob())); break;
-      case 2: Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SettingsScreen())); break;
-    }
+    if (i == 1) Navigator.push(context, MaterialPageRoute(builder: (_) => _PrescriptionsGlobales(patients: _patients)));
+    if (i == 2) Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
   }
 
   @override
@@ -169,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             borderRadius: BorderRadius.circular(kRadius),
                             child: ListView.separated(
                               itemCount: _filtres.length,
-                              separatorBuilder: (_, _) => const Divider(height: 1, color: kDivider, indent: 76),
+                              separatorBuilder: (_, __) => const Divider(height: 1, color: kDivider, indent: 76),
                               itemBuilder: (_, i) {
                                 final p = _filtres[i];
                                 return InkWell(
@@ -201,7 +197,25 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 8),
         ]),
       ),
-      floatingActionButton: BotButton(),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 72),
+        child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: kShadowLight),
+            child: const Text('Vous avez une question ?', style: TextStyle(fontSize: 12, color: kTextSub)),
+          ),
+          const SizedBox(width: 8),
+          FloatingActionButton(
+            heroTag: 'bot',
+            backgroundColor: kTeal,
+            elevation: 4,
+            mini: true,
+            onPressed: () {},
+            child: const Icon(Icons.smart_toy_rounded, color: Colors.white),
+          ),
+        ]),
+      ),
       bottomNavigationBar: CareBottomNav(currentIndex: 0, onTap: _onNav),
     );
   }
@@ -211,6 +225,61 @@ class _HomeScreenState extends State<HomeScreen> {
     SizedBox(height: 12),
     Text('Aucun patient trouvé', style: TextStyle(color: kTextSub, fontWeight: FontWeight.w600)),
   ]));
+}
+
+// ── Prescriptions globales ────────────────────────────────────
+class _PrescriptionsGlobales extends StatelessWidget {
+  final List<Patient> patients;
+  const _PrescriptionsGlobales({required this.patients});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kBg,
+      appBar: AppBar(leading: const BackButton()),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 16, 20, 12),
+            child: Text('Vos prescriptions', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: kTextMain)),
+          ),
+          Expanded(
+            child: patients.isEmpty
+                ? const Center(child: Text('Aucun patient', style: TextStyle(color: kTextSub)))
+                : Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(kRadius), boxShadow: kShadowLight),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(kRadius),
+                      child: ListView.separated(
+                        itemCount: patients.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1, color: kDivider, indent: 76),
+                        itemBuilder: (_, i) {
+                          final p = patients[i];
+                          return InkWell(
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PrescriptionsScreen(patient: p))),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              child: Row(children: [
+                                PatientAvatar(nom: p.nom, radius: 26, hasBorder: true),
+                                const SizedBox(width: 14),
+                                Expanded(child: Text(p.nom, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: kTextMain))),
+                                const Icon(Icons.play_arrow_rounded, color: kTeal, size: 28),
+                              ]),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+      bottomNavigationBar: CareBottomNav(currentIndex: 1, onTap: (i) { if (i == 0) Navigator.pop(context); }),
+    );
+  }
 }
 
 // ── Dialog ajout patient ──────────────────────────────────────

@@ -1,11 +1,7 @@
 // lib/screens/patient/chat_patient_screen.dart  — Écran 12
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import '../../constants.dart';
 import '../../models.dart';
-import '../../utils/messagesApi.dart';
 import '../../widgets/patient_avatar.dart';
 
 class ChatPatientScreen extends StatefulWidget {
@@ -25,33 +21,18 @@ class _ChatPatientScreenState extends State<ChatPatientScreen> {
   void initState() { super.initState(); _charger(); }
 
   Future<void> _charger() async {
-
-    final messages = Hive.box("UserMessages");
-
-    List<Message> distantMessages = [];
-
-    distantMessages = await getMessages(Session.id!, widget.medecin.id);
-
-    _msgs = messages.get("MessagesOf${Session.id}And${widget.medecin.id}") != null ? messages.get("MessagesOf${Session.id}And${widget.medecin.id}")?.cast<Message>() : _msgs;
-
-    if(distantMessages.length > _msgs.length)
-      {
-        for(int i = _msgs.length; i < distantMessages.length; i++)
-          {
-            _msgs.add(distantMessages[i]);
-          }
-      }
-
-    /*_msgs = [
+    // ════════════════════════════════════════════════════════
+    // TODO: _msgs = await DatabaseService.getMessages(Session.id!, widget.medecin.id);
+    await Future.delayed(const Duration(milliseconds: 300));
+    _msgs = [
       Message(id: 1, patientId: Session.id ?? 1, medecinId: widget.medecin.id, expediteur: 'patient',
         texte: 'Bonjour, j\'aimerais savoir lkhfkjhkjdfhkjsdhfhsgdhfbsbhsdbcsbdsybdfysdfskjdfsbdfbsdfjhsbjdhbfjsdbfhsbdjfsbhdjfbhsdjfhbsdjfhbsjdfh.',
         dateEnvoi: DateTime(2026, 2, 26, 17, 0)),
       Message(id: 2, patientId: Session.id ?? 1, medecinId: widget.medecin.id, expediteur: 'medecin',
         texte: 'Bonjour, j\'aimerais savoir lkhfkjhkjdfhkjsdhfhsgdhfbsbhsdbcsbdsybdfysdfskjdfsbdfbsdfjhsbjdhbfjsdbfhsbdjfsbhdjfbhsdjfhbsdjfhbsjdfh.',
         dateEnvoi: DateTime(2026, 2, 26, 21, 17)),
-    ];*/
+    ];
     // ════════════════════════════════════════════════════════
-
     setState(() => _chargement = false);
     _scrollBas();
   }
@@ -60,28 +41,12 @@ class _ChatPatientScreenState extends State<ChatPatientScreen> {
     if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
   });
 
-  void _envoyer() async{
-
-    final messages = Hive.box("UserMessages");
-
+  void _envoyer() {
     final t = _ctrl.text.trim();
     if (t.isEmpty) return;
-
     final m = Message(id: DateTime.now().millisecondsSinceEpoch, patientId: Session.id ?? 1, medecinId: widget.medecin.id, expediteur: 'patient', texte: t, dateEnvoi: DateTime.now());
-
-    bool res = await sendMessage(m);
-
-    if(res == true)
-      {
-        setState(() => _msgs.add(m));
-
-        messages.put("MessagesOf${Session.id}And${widget.medecin.id}", _msgs);
-      }
-    else
-      {
-        print('An error occured while sending message.');
-      }
-
+    // TODO: await DatabaseService.insererMessage(m);
+    setState(() => _msgs.add(m));
     _ctrl.clear();
     _scrollBas();
   }
@@ -110,7 +75,7 @@ class _ChatPatientScreenState extends State<ChatPatientScreen> {
       body: Stack(children: [
         // Fond d'écran
         Positioned.fill(child: chatBackground != null
-            ? Image.file(File(chatBackground!), errorBuilder: (_, _, _) => Container(color: const Color(0xFFE8F4F4)))
+            ? Image.asset(chatBackground!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: const Color(0xFFE8F4F4)))
             : Container(color: const Color(0xFFE8F4F4))),
 
         Column(children: [
@@ -143,7 +108,7 @@ class _ChatPatientScreenState extends State<ChatPatientScreen> {
                           const SizedBox(height: 4),
                           Row(mainAxisSize: MainAxisSize.min, children: [
                             Text(_heure(m.dateEnvoi), style: TextStyle(fontSize: 10, color: isPatient ? Colors.white60 : kTextSub)),
-                            //if (isPatient) ...[const SizedBox(width: 4), const Icon(Icons.done_all_rounded, size: 13, color: Colors.white60)],
+                            if (isPatient) ...[const SizedBox(width: 4), const Icon(Icons.done_all_rounded, size: 13, color: Colors.white60)],
                           ]),
                         ]),
                       ),

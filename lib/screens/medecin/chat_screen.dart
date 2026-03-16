@@ -1,9 +1,7 @@
 // lib/screens/medecin/chat_screen.dart  — Écrans 7 & 8
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import '../../constants.dart';
 import '../../models.dart';
-import '../../utils/messagesApi.dart';
 import '../../widgets/patient_avatar.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -24,33 +22,16 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() { super.initState(); _charger(); }
 
   Future<void> _charger() async {
-
-    final messages = Hive.box("UserMessages");
-
-    List<Message> distantMessages = [];
-
-    distantMessages = await getMessages(widget.patient.id, Session.id!);
-
-    _msgs = messages.get("MessagesOf${Session.id}And${widget.patient.id}") != null ? messages.get("MessagesOf${Session.id}And${widget.patient.id}")?.cast<Message>() : _msgs;
-
-    if(distantMessages.length > _msgs.length)
-    {
-      for(int i = _msgs.length; i < distantMessages.length; i++)
-      {
-        _msgs.add(distantMessages[i]);
-      }
-    }
-
-    /*_msgs = [
+    // TODO: _msgs = await DatabaseService.getMessages(widget.patient.id, Session.id!);
+    await Future.delayed(const Duration(milliseconds: 300));
+    _msgs = [
       Message(id: 1, patientId: widget.patient.id, medecinId: 1, expediteur: 'medecin',
         texte: 'Bonjour, j\'aimerais savoir lkhfkjhkjdfhkjsdhfhsgdhfbsbhsdbcsbdsybdfysdfskjdfsbdfbsdfjhsbjdhbfjsdbfhsbdjfsbhdjfbhsdjfhbsdjfhbsjdfh.',
         dateEnvoi: DateTime(2026, 2, 26, 17, 0)),
       Message(id: 2, patientId: widget.patient.id, medecinId: 1, expediteur: 'patient',
         texte: 'Bonjour, j\'aimerais savoir lkhfkjhkjdfhkjsdhfhsgdhfbsbhsdbcsbdsybdfysdfskjdfsbdfbsdfjhsbjdhbfjsdbfhsbdjfsbhdjfbhsdjfhbsdjfhbsjdfh.',
         dateEnvoi: DateTime(2026, 2, 26, 21, 17)),
-    ];*/
-
-
+    ];
     setState(() => _chargement = false);
     _scrollBas();
   }
@@ -59,27 +40,12 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
   });
 
-  void _envoyer() async{
-
-    final messages = Hive.box("UserMessages");
-
+  void _envoyer() {
     final t = _ctrl.text.trim();
     if (t.isEmpty) return;
-    final m = Message(id: DateTime.now().millisecondsSinceEpoch, patientId: Session.id ?? 1, medecinId: widget.patient.id, expediteur: 'medecin', texte: t, dateEnvoi: DateTime.now());
-
-    bool res = await sendMessage(m);
-
-    if(res == true)
-    {
-      setState(() => _msgs.add(m));
-
-      messages.put("MessagesOf${Session.id}And${widget.patient.id}", _msgs);
-    }
-    else
-    {
-      print('An error occured while sending message.');
-    }
-
+    final m = Message(id: DateTime.now().millisecondsSinceEpoch, patientId: widget.patient.id, medecinId: 1, expediteur: 'medecin', texte: t, dateEnvoi: DateTime.now());
+    // TODO: await DatabaseService.insererMessage(m);
+    setState(() => _msgs.add(m));
     _ctrl.clear();
     _scrollBas();
   }
@@ -96,13 +62,11 @@ class _ChatScreenState extends State<ChatScreen> {
         texte: '📋 Prescription envoyée\n💊 ${result.medicament}\n📝 ${result.message}', dateEnvoi: DateTime.now());
       setState(() => _msgs.add(msg));
       _scrollBas();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: const Text('Prescription envoyée au patient'),
         backgroundColor: kTeal, behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusSmall)),
       ));
-      }
     }
   }
 
@@ -126,7 +90,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Stack(children: [
         Positioned.fill(child: chatBg != null
-            ? Image.asset(chatBg!, fit: BoxFit.cover, errorBuilder: (_, _, _) => Container(color: const Color(0xFFE8F4F4)))
+            ? Image.asset(chatBg!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: const Color(0xFFE8F4F4)))
             : Container(color: const Color(0xFFE8F4F4))),
         Column(children: [
           Expanded(child: _chargement
@@ -195,13 +159,12 @@ class _Bulle extends StatelessWidget {
           ),
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 6)],
         ),
-
         child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
           Text(msg.texte, style: TextStyle(color: isMed ? Colors.white : kTextMain, fontSize: 14, height: 1.4)),
           const SizedBox(height: 4),
           Row(mainAxisSize: MainAxisSize.min, children: [
             Text(heure, style: TextStyle(fontSize: 10, color: isMed ? Colors.white60 : kTextSub)),
-            //if (isMed) ...[const SizedBox(width: 4), const Icon(Icons.done_all_rounded, size: 13, color: Colors.white60)],
+            if (isMed) ...[const SizedBox(width: 4), const Icon(Icons.done_all_rounded, size: 13, color: Colors.white60)],
           ]),
         ]),
       ),
@@ -303,9 +266,8 @@ class _DialogPrescriptionState extends State<_DialogPrescription> {
                 final finOk   = _fin   != null && date.isAtSameMomentAs(_fin!);
                 final estAuj  = date.year == auj.year && date.month == auj.month && date.day == auj.day;
                 Color? bg;
-                if (debutOk || finOk) {
-                  bg = kTealDark;
-                } else if (sel) bg = kTeal;
+                if (debutOk || finOk) bg = kTealDark;
+                else if (sel) bg = kTeal;
                 else if (estAuj) bg = kTeal.withOpacity(0.3);
                 return Expanded(child: GestureDetector(
                   onTap: () => _tapJour(date),

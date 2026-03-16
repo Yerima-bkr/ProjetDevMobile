@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import '../../constants.dart';
 import '../../models.dart';
-import '../../widgets/bot_help_button.dart';
 import '../../widgets/care_bottom_nav.dart';
 import 'doctors_screen.dart';
 import 'prescriptions_patient_screen.dart';
@@ -110,7 +109,15 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                     ),
                   ),
       ),
-      floatingActionButton: BotButton(),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 72),
+        child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+          Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: kShadowLight),
+              child: const Text('Vous avez une question ?', style: TextStyle(fontSize: 12, color: kTextSub))),
+          const SizedBox(width: 8),
+          FloatingActionButton(heroTag: 'bot', backgroundColor: kTeal, elevation: 4, mini: true, onPressed: () {}, child: const Icon(Icons.smart_toy_rounded, color: Colors.white)),
+        ]),
+      ),
       bottomNavigationBar: CareBottomNavPatient(currentIndex: 0, onTap: _onNav),
     );
   }

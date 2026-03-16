@@ -1,76 +1,70 @@
-// lib/screens/auth/login_screen.dart  — Écran 1
 import 'package:flutter/material.dart';
 import '../../constants.dart';
+// ignore: unused_import
 import '../../models.dart';
+import '../../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
+  // Clé pour la validation du formulaire
+  final _formKey = GlobalKey<FormState>();
+
   final _emailCtrl = TextEditingController();
-  final _mdpCtrl   = TextEditingController();
-  bool _loading    = false;
+  final _mdpCtrl = TextEditingController();
+
+  bool _loading = false;
   bool _mdpVisible = false;
   String? _erreur;
+
   late AnimationController _animCtrl;
-  late Animation<double>    _fadeAnim;
+  late Animation<double> _fadeAnim;
 
   @override
   void initState() {
     super.initState();
-    _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
+    _animCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 800));
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
     _animCtrl.forward();
   }
 
-  Future<void> _connexion() async {
-    final email = _emailCtrl.text.trim();
-    final mdp   = _mdpCtrl.text.trim();
-    if (email.isEmpty || mdp.isEmpty) {
-      setState(() => _erreur = 'Veuillez remplir tous les champs.');
-      return;
-    }
-    setState(() { _loading = true; _erreur = null; });
-
-    // ════════════════════════════════════════════════════════
-    // TODO: remplacer par l'appel réel de ton amie :
-    //
-    // final res = await DatabaseService.login(email, mdp);
-    // if (res == null) {
-    //   setState(() { _loading = false; _erreur = 'Identifiants incorrects.'; });
-    //   return;
-    // }
-    // Session.connecter(
-    //   id:    res['id'],
-    //   nom:   res['nom'],
-    //   email: res['email'],
-    //   role:  res['role'] == 'medecin'
-    //            ? RoleUtilisateur.medecin
-    //            : RoleUtilisateur.patient,
-    // );
-    //
-    // Simulation temporaire par l'email :
-    await Future.delayed(const Duration(milliseconds: 800));
-    final estMedecin = email.toLowerCase().contains('dr.') ||
-                       email.toLowerCase().contains('medecin') ||
-                       email.toLowerCase().contains('docteur');
-    Session.connecter(
-      id:    1,
-      nom:   estMedecin ? 'Dr. Rousgou Djansé Igor' : 'Rousgou Djansé Igor',
-      email: email,
-      role:  estMedecin ? RoleUtilisateur.medecin : RoleUtilisateur.patient,
-    );
-    // ════════════════════════════════════════════════════════
-
-    setState(() => _loading = false);
-    if (mounted) Navigator.pushReplacementNamed(context, '/accueil');
+  @override
+  void dispose() {
+    _animCtrl.dispose();
+    _emailCtrl.dispose();
+    _mdpCtrl.dispose();
+    super.dispose();
   }
 
-  @override
-  void dispose() { _animCtrl.dispose(); _emailCtrl.dispose(); _mdpCtrl.dispose(); super.dispose(); }
+  Future<void> _connexion() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _loading = true;
+        _erreur = null;
+      });
+
+      // Simulation de l'appel API
+      bool succes = await ApiService.login(_emailCtrl.text, _mdpCtrl.text);
+
+      if (succes && mounted) {
+        // Si la connexion réussit, on va vers l'accueil
+        Navigator.pushReplacementNamed(context, '/accueil');
+      } else {
+        // Si elle échoue, on arrête le chargement et on affiche une erreur
+        setState(() {
+          _loading = false;
+          _erreur = "Identifiants incorrects ou serveur injoignable.";
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,79 +76,87 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo
-                  _CareLogo(),
-                  const SizedBox(height: 48),
+              child: Form(
+                key: _formKey, // Liaison de la clé
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _CareLogo(),
+                    const SizedBox(height: 48),
 
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Connexion à votre Compte',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: kTextMain),
+                    // Champ Email avec validation
+                    TextFormField(
+                      controller: _emailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: "Email",
+                        prefixIcon: Icon(Icons.email_outlined),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "L'email est requis";
+                        }
+                        if (!value.contains('@')) {
+                          return "Format d'email invalide";
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-                  const SizedBox(height: 28),
+                    const SizedBox(height: 16),
 
-                  // Email
-                  TextField(
-                    controller: _emailCtrl,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(hintText: 'Email'),
-                  ),
-                  const SizedBox(height: 14),
+                    // Champ Mot de passe avec validation
+                    TextFormField(
+                      controller: _mdpCtrl,
+                      obscureText: !_mdpVisible,
+                      decoration: InputDecoration(
+                        labelText: "Mot de passe",
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(_mdpVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off),
+                          onPressed: () =>
+                              setState(() => _mdpVisible = !_mdpVisible),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Le mot de passe est requis";
+                        }
+                        if (value.length < 6) {
+                          return "Minimum 6 caractères";
+                        }
+                        return null;
+                      },
+                    ),
 
-                  // Mot de passe
-                  TextField(
-                    controller: _mdpCtrl,
-                    obscureText: !_mdpVisible,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => _connexion(),
-                    decoration: InputDecoration(
-                      hintText: 'Mot de passe',
-                      suffixIcon: IconButton(
-                        icon: Icon(_mdpVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: kTextSub),
-                        onPressed: () => setState(() => _mdpVisible = !_mdpVisible),
+                    if (_erreur != null) ...[
+                      const SizedBox(height: 16),
+                      Text(_erreur!, style: const TextStyle(color: kDanger)),
+                    ],
+
+                    const SizedBox(height: 32),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 55,
+                      child: ElevatedButton(
+                        onPressed: _loading ? null : _connexion,
+                        child: _loading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white)
+                            : const Text("SE CONNECTER"),
                       ),
                     ),
-                  ),
 
-                  if (_erreur != null) ...[
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(color: kDangerLight, borderRadius: BorderRadius.circular(kRadiusSmall)),
-                      child: Row(children: [
-                        const Icon(Icons.error_outline, color: kDanger, size: 16),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(_erreur!, style: const TextStyle(color: kDanger, fontSize: 13))),
-                      ]),
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.pushNamed(context, '/register'),
+                      child: const Text("Pas encore de compte ? S'inscrire",
+                          style: TextStyle(color: kTeal)),
                     ),
                   ],
-                  const SizedBox(height: 28),
-
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _loading ? null : _connexion,
-                      child: _loading
-                          ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                          : const Text('Connexion'),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    const Text('Pas de compte ? ', style: TextStyle(color: kTextSub, fontSize: 14)),
-                    GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/register'),
-                      child: const Text('Créer', style: TextStyle(color: kTeal, fontWeight: FontWeight.w800, fontSize: 14)),
-                    ),
-                  ]),
-                ],
+                ),
               ),
             ),
           ),
@@ -164,15 +166,18 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   }
 }
 
-// ── Logo réutilisable ────────────────────────────────────────
 class _CareLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(children: [
       Container(
-        width: 80, height: 80,
+        width: 80,
+        height: 80,
         decoration: const BoxDecoration(
-          gradient: LinearGradient(colors: [Color(0xFF80E8E8), kTeal], begin: Alignment.topLeft, end: Alignment.bottomRight),
+          gradient: LinearGradient(
+              colors: [Color(0xFF80E8E8), kTeal],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight),
           shape: BoxShape.circle,
         ),
         child: const Icon(Icons.water_drop, color: Colors.white, size: 40),
@@ -181,9 +186,10 @@ class _CareLogo extends StatelessWidget {
       const Text(
         'CARE',
         style: TextStyle(
-          fontSize: 32, fontWeight: FontWeight.w900, color: kTeal,
-          letterSpacing: 10,
-        ),
+            fontSize: 32,
+            fontWeight: FontWeight.w900,
+            color: kTeal,
+            letterSpacing: 10),
       ),
     ]);
   }
