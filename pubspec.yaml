@@ -1,0 +1,28 @@
+name: suivie
+description: Application de suivi de traitement médical CARE.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Indispensable pour l'API de votre collaborateur
+  http: ^1.1.0 
+  # Pour les icônes de visibilité et d'eau [4, 6]
+  cupertino_icons: ^1.0.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  fonts:
+    - family: Roboto # Défini dans votre careTheme() [8]
+     # fonts:
+       # - asset: fonts/Roboto-Regular.ttf
+
