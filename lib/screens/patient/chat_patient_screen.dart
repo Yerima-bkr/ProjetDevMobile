@@ -1,5 +1,8 @@
 // lib/screens/patient/chat_patient_screen.dart  — Écran 12
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import '../../constants.dart';
 import '../../models.dart';
 import '../../widgets/patient_avatar.dart';
@@ -21,18 +24,25 @@ class _ChatPatientScreenState extends State<ChatPatientScreen> {
   void initState() { super.initState(); _charger(); }
 
   Future<void> _charger() async {
+
+    final Messages = Hive.box("UserMessages");
+
     // ════════════════════════════════════════════════════════
     // TODO: _msgs = await DatabaseService.getMessages(Session.id!, widget.medecin.id);
-    await Future.delayed(const Duration(milliseconds: 300));
-    _msgs = [
+    //await Future.delayed(const Duration(milliseconds: 300));
+
+    _msgs = Messages.get("MessagesOf${Session.id}And${widget.medecin.id}") != null ? Messages.get("MessagesOf${Session.id}And${widget.medecin.id}")?.cast<Message>() : _msgs;
+
+    /*_msgs = [
       Message(id: 1, patientId: Session.id ?? 1, medecinId: widget.medecin.id, expediteur: 'patient',
         texte: 'Bonjour, j\'aimerais savoir lkhfkjhkjdfhkjsdhfhsgdhfbsbhsdbcsbdsybdfysdfskjdfsbdfbsdfjhsbjdhbfjsdbfhsbdjfsbhdjfbhsdjfhbsdjfhbsjdfh.',
         dateEnvoi: DateTime(2026, 2, 26, 17, 0)),
       Message(id: 2, patientId: Session.id ?? 1, medecinId: widget.medecin.id, expediteur: 'medecin',
         texte: 'Bonjour, j\'aimerais savoir lkhfkjhkjdfhkjsdhfhsgdhfbsbhsdbcsbdsybdfysdfskjdfsbdfbsdfjhsbjdhbfjsdbfhsbdjfsbhdjfbhsdjfhbsdjfhbsjdfh.',
         dateEnvoi: DateTime(2026, 2, 26, 21, 17)),
-    ];
+    ];*/
     // ════════════════════════════════════════════════════════
+
     setState(() => _chargement = false);
     _scrollBas();
   }
@@ -42,11 +52,17 @@ class _ChatPatientScreenState extends State<ChatPatientScreen> {
   });
 
   void _envoyer() {
+
+    final Messages = Hive.box("UserMessages");
+
     final t = _ctrl.text.trim();
     if (t.isEmpty) return;
     final m = Message(id: DateTime.now().millisecondsSinceEpoch, patientId: Session.id ?? 1, medecinId: widget.medecin.id, expediteur: 'patient', texte: t, dateEnvoi: DateTime.now());
     // TODO: await DatabaseService.insererMessage(m);
     setState(() => _msgs.add(m));
+
+    Messages.put("MessagesOf${Session.id}And${widget.medecin.id}", _msgs);
+
     _ctrl.clear();
     _scrollBas();
   }
@@ -75,7 +91,7 @@ class _ChatPatientScreenState extends State<ChatPatientScreen> {
       body: Stack(children: [
         // Fond d'écran
         Positioned.fill(child: chatBackground != null
-            ? Image.asset(chatBackground!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: const Color(0xFFE8F4F4)))
+            ? Image.file(File(chatBackground!), errorBuilder: (_, _, _) => Container(color: const Color(0xFFE8F4F4)))
             : Container(color: const Color(0xFFE8F4F4))),
 
         Column(children: [
@@ -108,7 +124,7 @@ class _ChatPatientScreenState extends State<ChatPatientScreen> {
                           const SizedBox(height: 4),
                           Row(mainAxisSize: MainAxisSize.min, children: [
                             Text(_heure(m.dateEnvoi), style: TextStyle(fontSize: 10, color: isPatient ? Colors.white60 : kTextSub)),
-                            if (isPatient) ...[const SizedBox(width: 4), const Icon(Icons.done_all_rounded, size: 13, color: Colors.white60)],
+                            //if (isPatient) ...[const SizedBox(width: 4), const Icon(Icons.done_all_rounded, size: 13, color: Colors.white60)],
                           ]),
                         ]),
                       ),

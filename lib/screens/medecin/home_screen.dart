@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../constants.dart';
 import '../../models.dart';
+import '../../widgets/bot_help_button.dart';
 import '../../widgets/care_bottom_nav.dart';
 import '../../widgets/patient_avatar.dart';
 import 'patient_detail_screen.dart';
@@ -165,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             borderRadius: BorderRadius.circular(kRadius),
                             child: ListView.separated(
                               itemCount: _filtres.length,
-                              separatorBuilder: (_, __) => const Divider(height: 1, color: kDivider, indent: 76),
+                              separatorBuilder: (_, _) => const Divider(height: 1, color: kDivider, indent: 76),
                               itemBuilder: (_, i) {
                                 final p = _filtres[i];
                                 return InkWell(
@@ -197,25 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 8),
         ]),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 72),
-        child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: kShadowLight),
-            child: const Text('Vous avez une question ?', style: TextStyle(fontSize: 12, color: kTextSub)),
-          ),
-          const SizedBox(width: 8),
-          FloatingActionButton(
-            heroTag: 'bot',
-            backgroundColor: kTeal,
-            elevation: 4,
-            mini: true,
-            onPressed: () {},
-            child: const Icon(Icons.smart_toy_rounded, color: Colors.white),
-          ),
-        ]),
-      ),
+      floatingActionButton: BotButton(),
       bottomNavigationBar: CareBottomNav(currentIndex: 0, onTap: _onNav),
     );
   }
@@ -254,7 +237,7 @@ class _PrescriptionsGlobales extends StatelessWidget {
                       borderRadius: BorderRadius.circular(kRadius),
                       child: ListView.separated(
                         itemCount: patients.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1, color: kDivider, indent: 76),
+                        separatorBuilder: (_, _) => const Divider(height: 1, color: kDivider, indent: 76),
                         itemBuilder: (_, i) {
                           final p = patients[i];
                           return InkWell(

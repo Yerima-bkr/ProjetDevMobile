@@ -1,7 +1,12 @@
 // lib/screens/patient/settings_patient_screen.dart  — Écran 16
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../constants.dart';
 import '../../models.dart';
+import '../../widgets/bot_help_button.dart';
 import '../../widgets/care_bottom_nav.dart';
 import '../auth/login_screen.dart';
 import 'patient_home_screen.dart';
@@ -17,6 +22,7 @@ class SettingsPatientScreen extends StatefulWidget {
 
 class _SettingsPatientScreenState extends State<SettingsPatientScreen> {
   bool _fondOuvert = false;
+  final ImagePicker picker = ImagePicker();
 
   void _onNav(int i) {
     switch (i) {
@@ -45,6 +51,22 @@ class _SettingsPatientScreenState extends State<SettingsPatientScreen> {
       Session.deconnecter();
       if (mounted) Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
     }
+  }
+
+  Future<void> setChatBackgroundImage()
+  async {
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    setState(() {
+      chatBackground = image?.path;
+
+      if(chatBackground != null)
+        {
+            final appSettingsDB = Hive.box("AppSettings");
+
+            appSettingsDB.put("chatBackgroundPath", chatBackground);
+        }
+    });
   }
 
   @override
@@ -109,8 +131,9 @@ class _SettingsPatientScreenState extends State<SettingsPatientScreen> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(kRadiusSmall),
                         child: chatBackground != null
-                            ? Image.asset(chatBackground!, height: 160, width: double.infinity, fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(height: 160, color: const Color(0xFFE8F4F4), child: const Center(child: Icon(Icons.image_outlined, size: 40, color: kTextSub))))
+                            ? Image.file(File(chatBackground!),errorBuilder: (_, _, _) => Container(height: 160, color: const Color(0xFFE8F4F4), child: const Center(child: Icon(Icons.image_outlined, size: 40, color: kTextSub))))
+                                /*Image.asset(chatBackground!, height: 160, width: double.infinity, fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => Container(height: 160, color: const Color(0xFFE8F4F4), child: const Center(child: Icon(Icons.image_outlined, size: 40, color: kTextSub))))*/
                             : Container(height: 160, width: double.infinity, decoration: BoxDecoration(color: const Color(0xFFE8F4F4), borderRadius: BorderRadius.circular(kRadiusSmall)),
                                 child: const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                                   Icon(Icons.wallpaper_rounded, size: 40, color: kTeal),
@@ -124,14 +147,14 @@ class _SettingsPatientScreenState extends State<SettingsPatientScreen> {
                         child: OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(side: const BorderSide(color: kTeal), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusBtn)), padding: const EdgeInsets.symmetric(vertical: 14)),
                           // TODO: utiliser image_picker pour choisir depuis la galerie
-                          onPressed: () {
-                            setState(() => chatBackground = null);
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: const Text('Fond remis par défaut'),
+                          onPressed: setChatBackgroundImage
+
+                            /*ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text('Chemin Fond d\' ecran actuel : $chatBackground'),
                               backgroundColor: kTeal, behavior: SnackBarBehavior.floating,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusSmall)),
-                            ));
-                          },
+                            ));*/
+                          ,
                           icon: const Icon(Icons.image_search_rounded, color: kTeal),
                           label: const Text('Changer le fond d\'écran', style: TextStyle(color: kTeal, fontWeight: FontWeight.w700)),
                         ),
@@ -157,15 +180,7 @@ class _SettingsPatientScreenState extends State<SettingsPatientScreen> {
           ]),
         ),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 72),
-        child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-          Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: kShadowLight),
-              child: const Text('Vous avez une question ?', style: TextStyle(fontSize: 12, color: kTextSub))),
-          const SizedBox(width: 8),
-          FloatingActionButton(heroTag: 'bot', backgroundColor: kTeal, elevation: 4, mini: true, onPressed: () {}, child: const Icon(Icons.smart_toy_rounded, color: Colors.white)),
-        ]),
-      ),
+      floatingActionButton: BotButton(),
       bottomNavigationBar: CareBottomNavPatient(currentIndex: 3, onTap: _onNav),
     );
   }

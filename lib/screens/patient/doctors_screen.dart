@@ -1,5 +1,7 @@
 // lib/screens/patient/doctors_screen.dart  — Écrans 10 & 11
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:suivie/widgets/bot_help_button.dart';
 import '../../constants.dart';
 import '../../models.dart';
 import '../../widgets/care_bottom_nav.dart';
@@ -20,10 +22,16 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
   bool _chargement  = false;
   bool _aRecherche  = false;
   bool _showFiltres = false;
-  List<Medecin> _contactes = [];
+  final List<Medecin> _contactes = [];
   List<Medecin> _resultats = [];
   String _specialiteChoisie = 'Toutes';
   final List<String> _specialites = ['Toutes', 'Ophtalmologue', 'Psychiatre', 'Généraliste', 'Cardiologue', 'Pédiatre'];
+  final tous = [
+    Medecin(id: 1, nom: 'Edouard Newgate',  email: 'enewgate@care.com',  specialite: 'Ophtalmologue'),
+    Medecin(id: 2, nom: 'Marshall D Teech', email: 'mteech@care.com',    specialite: 'Psychiatre'),
+    Medecin(id: 3, nom: 'Scratchmen Apoo',  email: 'sapoo@care.com',     specialite: 'Psychiatre'),
+    Medecin(id: 4, nom: 'Usopp',            email: 'usopp@care.com',     specialite: 'Ophtalmologue'),
+  ];
 
   @override
   void initState() { super.initState(); _chargerContactes(); }
@@ -31,8 +39,42 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
   Future<void> _chargerContactes() async {
     // ════════════════════════════════════════════════════════
     // TODO: _contactes = await DatabaseService.getMedecinsContactes(Session.id);
-    await Future.delayed(const Duration(milliseconds: 300));
-    _contactes = []; // vide par défaut
+    //await Future.delayed(const Duration(milliseconds: 300));
+
+    final Messages = Hive.box("UserMessages");
+
+    Message? m;
+
+    for(int i = 0; i < tous.length; i++)
+      {
+        if(Messages.get("MessagesOf${Session.id}And${tous[i].id}") == null)
+          {
+            continue;
+          }
+
+        List<Message> list = Messages.get("MessagesOf${Session.id}And${tous[i].id}").cast<Message>();
+
+        if(list.isNotEmpty)
+          {
+            m = list.last;
+          }
+
+        if(m == null)
+          {
+            _contactes.add(tous[i]);
+          }
+        else
+          {
+            if(m.dateEnvoi.compareTo(list.last.dateEnvoi) == -1)
+              {
+                _contactes.insert(0, tous[i]);
+              }
+            else
+              {
+                _contactes.add(tous[i]);
+              }
+          }
+      }
     // ════════════════════════════════════════════════════════
     setState(() {});
   }
@@ -46,12 +88,6 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
     // ════════════════════════════════════════════════════════
     // TODO: _resultats = await DatabaseService.rechercherMedecins(q, _specialiteChoisie == 'Toutes' ? null : _specialiteChoisie);
     await Future.delayed(const Duration(milliseconds: 500));
-    final tous = [
-      Medecin(id: 1, nom: 'Edouard Newgate',  email: 'enewgate@care.com',  specialite: 'Ophtalmologue'),
-      Medecin(id: 2, nom: 'Marshall D Teech', email: 'mteech@care.com',    specialite: 'Psychiatre'),
-      Medecin(id: 3, nom: 'Scratchmen Apoo',  email: 'sapoo@care.com',     specialite: 'Psychiatre'),
-      Medecin(id: 4, nom: 'Usopp',            email: 'usopp@care.com',     specialite: 'Ophtalmologue'),
-    ];
     _resultats = tous.where((m) {
       final matchQ  = q.isEmpty || m.nom.toLowerCase().contains(q.toLowerCase()) || m.specialite.toLowerCase().contains(q.toLowerCase());
       final matchSp = _specialiteChoisie == 'Toutes' || m.specialite == _specialiteChoisie;
@@ -174,7 +210,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                               borderRadius: BorderRadius.circular(kRadius),
                               child: ListView.separated(
                                 itemCount: liste.length,
-                                separatorBuilder: (_, __) => const Divider(height: 1, color: kDivider, indent: 76),
+                                separatorBuilder: (_, _) => const Divider(height: 1, color: kDivider, indent: 76),
                                 itemBuilder: (_, i) => _medecinTile(liste[i]),
                               ),
                             ),
@@ -184,15 +220,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
           const SizedBox(height: 8),
         ]),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 72),
-        child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-          Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: kShadowLight),
-              child: const Text('Vous avez une question ?', style: TextStyle(fontSize: 12, color: kTextSub))),
-          const SizedBox(width: 8),
-          FloatingActionButton(heroTag: 'bot', backgroundColor: kTeal, elevation: 4, mini: true, onPressed: () {}, child: const Icon(Icons.smart_toy_rounded, color: Colors.white)),
-        ]),
-      ),
+      floatingActionButton: BotButton(),
       bottomNavigationBar: CareBottomNavPatient(currentIndex: 1, onTap: _onNav),
     );
   }

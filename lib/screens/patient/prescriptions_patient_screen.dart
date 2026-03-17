@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../constants.dart';
 import '../../models.dart';
+import '../../widgets/bot_help_button.dart';
 import '../../widgets/care_bottom_nav.dart';
 import '../../widgets/patient_avatar.dart';
 import 'patient_home_screen.dart';
@@ -140,15 +141,7 @@ class _PrescriptionsPatientScreenState extends State<PrescriptionsPatientScreen>
           ),
         ]),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 72),
-        child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-          Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: kShadowLight),
-              child: const Text('Vous avez une question ?', style: TextStyle(fontSize: 12, color: kTextSub))),
-          const SizedBox(width: 8),
-          FloatingActionButton(heroTag: 'bot', backgroundColor: kTeal, elevation: 4, mini: true, onPressed: () {}, child: const Icon(Icons.smart_toy_rounded, color: Colors.white)),
-        ]),
-      ),
+      floatingActionButton: BotButton(),
       bottomNavigationBar: CareBottomNavPatient(currentIndex: 2, onTap: _onNav),
     );
   }
@@ -210,8 +203,9 @@ class _MiniCalendrierState extends State<_MiniCalendrier> {
           final enPlage = _dansPlage(date);
           final estAuj  = date.year == auj.year && date.month == auj.month && date.day == auj.day;
           Color? bg;
-          if (enPlage) bg = kTealDark;
-          else if (estAuj) bg = kTeal.withOpacity(0.4);
+          if (enPlage) {
+            bg = kTealDark;
+          } else if (estAuj) bg = kTeal.withOpacity(0.4);
           return Expanded(child: Container(
             margin: const EdgeInsets.all(1.5), height: 28,
             decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
