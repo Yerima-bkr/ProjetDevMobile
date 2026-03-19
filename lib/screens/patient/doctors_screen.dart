@@ -24,8 +24,8 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
   bool _showFiltres = false;
   final List<Medecin> _contactes = [];
   List<Medecin> _resultats = [];
-  String _specialiteChoisie = 'Toutes';
-  final List<String> _specialites = ['Toutes', 'Ophtalmologue', 'Psychiatre', 'Généraliste', 'Cardiologue', 'Pédiatre'];
+  String _specialiteChoisie = 'Mes contacts';
+  final List<String> _specialites = ['Mes contacts', 'Ophtalmologue', 'Psychiatre', 'Généraliste', 'Cardiologue', 'Pédiatre'];
   final tous = [
     Medecin(id: 1, nom: 'Edouard Newgate',  email: 'enewgate@care.com',  specialite: 'Ophtalmologue'),
     Medecin(id: 2, nom: 'Marshall D Teech', email: 'mteech@care.com',    specialite: 'Psychiatre'),
@@ -61,17 +61,23 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
 
         if(m == null)
           {
-            _contactes.add(tous[i]);
+            if(!_contactes.contains(tous[i])) {
+              _contactes.add(tous[i]);
+            }
           }
         else
           {
             if(m.dateEnvoi.compareTo(list.last.dateEnvoi) == -1)
               {
-                _contactes.insert(0, tous[i]);
+                if(!_contactes.contains(tous[i])) {
+                  _contactes.insert(0, tous[i]);
+                }
               }
             else
               {
-                _contactes.add(tous[i]);
+                if(!_contactes.contains(tous[i])) {
+                  _contactes.add(tous[i]);
+                }
               }
           }
       }
@@ -81,7 +87,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
 
   Future<void> _rechercher() async {
     final q = _searchCtrl.text.trim();
-    if (q.isEmpty && _specialiteChoisie == 'Toutes') {
+    if (q.isEmpty && _specialiteChoisie == 'Mes contacts') {
       setState(() { _resultats = []; _aRecherche = false; }); return;
     }
     setState(() { _chargement = true; _aRecherche = true; });
@@ -90,7 +96,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
     await Future.delayed(const Duration(milliseconds: 500));
     _resultats = tous.where((m) {
       final matchQ  = q.isEmpty || m.nom.toLowerCase().contains(q.toLowerCase()) || m.specialite.toLowerCase().contains(q.toLowerCase());
-      final matchSp = _specialiteChoisie == 'Toutes' || m.specialite == _specialiteChoisie;
+      final matchSp = _specialiteChoisie == 'Mes contacts' || m.specialite == _specialiteChoisie;
       return matchQ && matchSp;
     }).toList();
     // ════════════════════════════════════════════════════════
@@ -118,11 +124,13 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(m.nom, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: kTextMain)),
           Text(m.specialite, style: const TextStyle(color: kTextSub, fontSize: 13)),
-        ])),
-        const Icon(Icons.play_arrow_rounded, color: kTeal, size: 26),
-      ]),
+        ])),Container(
+        width: 42, height: 42,
+        decoration: const BoxDecoration(color: kTeal, shape: BoxShape.circle),
+        child: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 18))
+      ],
     ),
-  );
+  ));
 
   @override
   Widget build(BuildContext context) {
@@ -168,8 +176,8 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
                   decoration: BoxDecoration(color: const Color(0xFFF5F8F8), borderRadius: BorderRadius.circular(kRadiusBtn), border: Border.all(color: const Color(0xFFE0EEEE))),
                   child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                    Text(_specialiteChoisie == 'Toutes' ? 'Spécialité du medecin' : _specialiteChoisie,
-                        style: TextStyle(color: _specialiteChoisie == 'Toutes' ? kTextSub : kTextMain, fontSize: 14)),
+                    Text(_specialiteChoisie == 'Mes contacts' ? 'Spécialité du medecin' : _specialiteChoisie,
+                        style: TextStyle(color: _specialiteChoisie == 'Mes contacts' ? kTextSub : kTextMain, fontSize: 14)),
                     Icon(_showFiltres ? Icons.arrow_drop_up : Icons.play_arrow_rounded, color: kTeal, size: 22),
                   ]),
                 ),
@@ -179,7 +187,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                 margin: const EdgeInsets.only(top: 6),
                 decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(kRadiusSmall), boxShadow: kShadow),
                 child: Column(children: _specialites.map((s) => InkWell(
-                  onTap: () { setState(() { _specialiteChoisie = s; _showFiltres = false; }); _rechercher(); },
+                  onTap: () { setState(() { _specialiteChoisie = s; _showFiltres = false; }); if(_specialiteChoisie == 'Mes contacts') {_chargerContactes();} _rechercher(); },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
                     child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [

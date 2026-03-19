@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import '../../constants.dart';
 import '../../models.dart';
+import '../../utils/messagesApi.dart';
 import '../../widgets/patient_avatar.dart';
 
 class ChatPatientScreen extends StatefulWidget {
@@ -25,13 +26,21 @@ class _ChatPatientScreenState extends State<ChatPatientScreen> {
 
   Future<void> _charger() async {
 
-    final Messages = Hive.box("UserMessages");
+    final messages = Hive.box("UserMessages");
 
-    // ════════════════════════════════════════════════════════
-    // TODO: _msgs = await DatabaseService.getMessages(Session.id!, widget.medecin.id);
-    //await Future.delayed(const Duration(milliseconds: 300));
+    List<Message> distantMessages = [];
 
-    _msgs = Messages.get("MessagesOf${Session.id}And${widget.medecin.id}") != null ? Messages.get("MessagesOf${Session.id}And${widget.medecin.id}")?.cast<Message>() : _msgs;
+    distantMessages = await getMessages(Session.id!, widget.medecin.id);
+
+    _msgs = messages.get("MessagesOf${Session.id}And${widget.medecin.id}") != null ? messages.get("MessagesOf${Session.id}And${widget.medecin.id}")?.cast<Message>() : _msgs;
+
+    if(distantMessages.length > _msgs.length)
+      {
+        for(int i = _msgs.length; i < distantMessages.length; i++)
+          {
+            _msgs.add(distantMessages[i]);
+          }
+      }
 
     /*_msgs = [
       Message(id: 1, patientId: Session.id ?? 1, medecinId: widget.medecin.id, expediteur: 'patient',
@@ -51,17 +60,27 @@ class _ChatPatientScreenState extends State<ChatPatientScreen> {
     if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
   });
 
-  void _envoyer() {
+  void _envoyer() async{
 
-    final Messages = Hive.box("UserMessages");
+    final messages = Hive.box("UserMessages");
 
     final t = _ctrl.text.trim();
     if (t.isEmpty) return;
-    final m = Message(id: DateTime.now().millisecondsSinceEpoch, patientId: Session.id ?? 1, medecinId: widget.medecin.id, expediteur: 'patient', texte: t, dateEnvoi: DateTime.now());
-    // TODO: await DatabaseService.insererMessage(m);
-    setState(() => _msgs.add(m));
 
-    Messages.put("MessagesOf${Session.id}And${widget.medecin.id}", _msgs);
+    final m = Message(id: DateTime.now().millisecondsSinceEpoch, patientId: Session.id ?? 1, medecinId: widget.medecin.id, expediteur: 'patient', texte: t, dateEnvoi: DateTime.now());
+
+    bool res = await sendMessage(m);
+
+    if(res == true)
+      {
+        setState(() => _msgs.add(m));
+
+        messages.put("MessagesOf${Session.id}And${widget.medecin.id}", _msgs);
+      }
+    else
+      {
+        print('An error occured while sending message.');
+      }
 
     _ctrl.clear();
     _scrollBas();
