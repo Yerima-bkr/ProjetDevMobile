@@ -44,7 +44,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     // ════════════════════════════════════════════════════════
     // TODO: await DatabaseService.modifierPatient(Session.id, nom, email, mdp.isEmpty ? null : mdp);
     await Future.delayed(const Duration(milliseconds: 700));
-    Session.connecter(id: Session.id!, nom: nom, email: email, role: Session.role!);
+    Session.connecter(id: Session.id!, nom: nom, email: email, role: Session.role!, token: Session.token);
     // ════════════════════════════════════════════════════════
 
     setState(() { _loading = false; _succes = 'Compte mis à jour avec succès ✓'; _mdpCtrl.clear(); _confCtrl.clear(); });

@@ -13,6 +13,8 @@ class Session {
   static String?          nom;
   static String?          email;
   static RoleUtilisateur? role;
+  static String? token;
+  static Patient? connectedPatient;
 
   static bool get estMedecin  => role == RoleUtilisateur.medecin;
   static bool get estPatient  => role == RoleUtilisateur.patient;
@@ -24,11 +26,13 @@ class Session {
     required String nom,
     required String email,
     required RoleUtilisateur role,
+    required String? token,
   }) {
     Session.id    = id;
     Session.nom   = nom;
     Session.email = email;
     Session.role  = role;
+    Session.token = token;
   }
 
   static void deconnecter() {
@@ -100,28 +104,32 @@ class Patient {
 class Medecin {
   final int     id;
   final String  nom;
+  final String  matricule;
   final String  email;
   final String  specialite;
-  final String? avatarUrl;
 
   Medecin({
     required this.id,
     required this.nom,
+    required this.matricule,
     required this.email,
     required this.specialite,
-    this.avatarUrl,
   });
 
-  // TODO: connecter à DatabaseService
-  factory Medecin.fromMap(Map<String, dynamic> m) => Medecin(
-    id: m['id'], nom: m['nom'], email: m['email'] ?? '',
-    specialite: m['specialite'], avatarUrl: m['avatar_url'],
+  factory Medecin.fromJson(Map<String, dynamic> m) => Medecin(
+    id: m['id'] is int ? m['id'] : int.parse(m['id'].toString()),
+    nom: m['nom'] ?? '',
+    email: m['email'] ?? '',
+    matricule: m['matricule'] ?? '',
+    specialite: m['specialite'] ?? '',
   );
 
-  Map<String, dynamic> toMap() => {
-    'id': id, 'nom': nom, 'email': email,
-    'specialite': specialite, 'avatar_url': avatarUrl,
-    'role': 'medecin',
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'nom': nom,
+    'email': email,
+    'matricule' : matricule,
+    'specialite': specialite,
   };
 }
 
@@ -198,24 +206,23 @@ class Message extends HiveObject{
 
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
-        id: int.parse(json['id']),
-        patientId: int.parse(json['PatientId']),
-        medecinId: int.parse(json['medecinId']),
-        expediteur: json['expediteur'] == "0" ? "patient" : "medecin",
-        texte: json['text'],
+        id: json['id'] is int ? json['id'] : int.parse(json['id'].toString()),
+        patientId: json['PatientId'] is int ? json['PatientId'] : int.parse(json['PatientId'].toString()),
+        medecinId: json['medecinId'] is int ? json['medecinId'] : int.parse(json['medecinId'].toString()),
+        expediteur: json['expediteur'].toString() == "0" ? "patient" : "medecin",
+        texte: json['text'] ?? '',
         dateEnvoi: DateTime.parse(json['dateEnvoi']),
-        lu: bool.parse(json['lu']));
+        lu: json['lu'] is bool ? json['lu'] : (json['lu'].toString().toLowerCase() == 'true'));
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id.toString(),
-      'PatientId': patientId.toString(),
-      'medecinId': medecinId.toString(),
+      'PatientId': patientId,
+      'medecinId': medecinId,
       'expediteur': expediteur == "patient" ? "0" : "1",
       'text': texte,
       'dateEnvoi': dateEnvoi.toIso8601String(),
-      'lu': lu.toString()
+      'lu': lu
     };
   }
 

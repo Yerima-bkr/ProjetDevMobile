@@ -25,12 +25,9 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     setState(() => _chargement = true);
     // ════════════════════════════════════════════════════════
     // TODO: _patient = await DatabaseService.getPatientConnecte(Session.id);
-    await Future.delayed(const Duration(milliseconds: 400));
-    _patient = Patient(
-      id: Session.id ?? 1, nom: Session.nom ?? 'Patient',
-      email: Session.email ?? '', taille: 2.75, poids: 150,
-      groupeSanguin: 'Z-', glycemie: 1.0,
-    );
+    //await Future.delayed(const Duration(milliseconds: 400));
+
+    _patient = Session.connectedPatient;
     // ════════════════════════════════════════════════════════
     setState(() => _chargement = false);
   }

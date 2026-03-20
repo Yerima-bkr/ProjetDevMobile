@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import '../../constants.dart';
 import '../../models.dart';
+import '../../utils/messagesApi.dart';
 import '../../widgets/patient_avatar.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -26,20 +27,28 @@ class _ChatScreenState extends State<ChatScreen> {
 
     final Messages = Hive.box("UserMessages");
 
-    // TODO: _msgs = await DatabaseService.getMessages(widget.patient.id, Session.id!);
-    //await Future.delayed(const Duration(milliseconds: 300));
+    List<Message> distantMessages = [];
+
+    distantMessages = await getMessages(widget.patient.id,Session.id ?? 0);
 
     _msgs = Messages.get("MessagesOf${Session.id}And${widget.patient.id}") != null ? Messages.get("MessagesOf${Session.id}And${widget.patient.id}")?.cast<Message>() : _msgs;
 
-    /*_msgs = [
-      Message(id: 1, patientId: widget.patient.id, medecinId: 1, expediteur: 'medecin',
-        texte: 'Bonjour, j\'aimerais savoir lkhfkjhkjdfhkjsdhfhsgdhfbsbhsdbcsbdsybdfysdfskjdfsbdfbsdfjhsbjdhbfjsdbfhsbdjfsbhdjfbhsdjfhbsdjfhbsjdfh.',
-        dateEnvoi: DateTime(2026, 2, 26, 17, 0)),
-      Message(id: 2, patientId: widget.patient.id, medecinId: 1, expediteur: 'patient',
-        texte: 'Bonjour, j\'aimerais savoir lkhfkjhkjdfhkjsdhfhsgdhfbsbhsdbcsbdsybdfysdfskjdfsbdfbsdfjhsbjdhbfjsdbfhsbdjfsbhdjfbhsdjfhbsdjfhbsjdfh.',
-        dateEnvoi: DateTime(2026, 2, 26, 21, 17)),
-    ];*/
-
+    if(distantMessages.isNotEmpty && distantMessages.length > _msgs.length)
+    {
+      for(int i = _msgs.length; i < distantMessages.length; i++)
+      {
+        setState(() {
+          _msgs.add(distantMessages[i]);
+        });
+      }
+    }
+    else
+    {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("Pas de nouveaux messages.")));
+      }
+    }
 
     setState(() => _chargement = false);
     _scrollBas();
@@ -49,20 +58,43 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
   });
 
-  void _envoyer() {
+  void _envoyer() async{
 
-    final Messages = Hive.box("UserMessages");
+    setState(() => _chargement = true);
+
+    final messages = Hive.box("UserMessages");
 
     final t = _ctrl.text.trim();
     if (t.isEmpty) return;
-    final m = Message(id: DateTime.now().millisecondsSinceEpoch, patientId: Session.id ?? 1, medecinId: widget.patient.id, expediteur: 'medecin', texte: t, dateEnvoi: DateTime.now());
-    // TODO: await DatabaseService.insererMessage(m);
+    final m = Message(id: DateTime.now().millisecondsSinceEpoch, patientId: widget.patient.id, medecinId: Session.id ?? 0, expediteur: 'medecin', texte: t, dateEnvoi: DateTime.now());
+
+    bool res = await sendMessage(m);
+
     setState(() => _msgs.add(m));
 
-    Messages.put("MessagesOf${widget.patient.id}And${Session.id}", _msgs);
+    if(res == true)
+    {
+      setState(() => _chargement = false);
 
-    _ctrl.clear();
-    _scrollBas();
+      messages.put("MessagesOf${Session.id}And${widget.patient.id}", _msgs);
+
+      _ctrl.clear();
+      _scrollBas();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("Message envoyé.")));
+      }
+    }
+    else {
+
+      setState((){_chargement = false; _msgs.remove(m);});
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("Erreur lors de l'envoi du message.")));
+      }
+    }
   }
 
   Future<void> _ouvrirPrescription() async {

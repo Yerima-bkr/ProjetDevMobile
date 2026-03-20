@@ -1,6 +1,7 @@
 // lib/screens/patient/doctors_screen.dart  — Écrans 10 & 11
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:suivie/utils/messagesApi.dart';
 import 'package:suivie/widgets/bot_help_button.dart';
 import '../../constants.dart';
 import '../../models.dart';
@@ -25,34 +26,49 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
   final List<Medecin> _contactes = [];
   List<Medecin> _resultats = [];
   String _specialiteChoisie = 'Toutes';
-  final List<String> _specialites = ['Toutes', 'Ophtalmologue', 'Psychiatre', 'Généraliste', 'Cardiologue', 'Pédiatre'];
-  final tous = [
-    Medecin(id: 1, nom: 'Edouard Newgate',  email: 'enewgate@care.com',  specialite: 'Ophtalmologue'),
+  List<String> _specialites = ['Toutes', /*'Ophtalmologue', 'Psychiatre', 'Généraliste', 'Cardiologue', 'Pédiatre'*/];
+  List<Medecin> tous = [
+    /*Medecin(id: 1, nom: 'Edouard Newgate',  email: 'enewgate@care.com',  specialite: 'Ophtalmologue'),
     Medecin(id: 2, nom: 'Marshall D Teech', email: 'mteech@care.com',    specialite: 'Psychiatre'),
     Medecin(id: 3, nom: 'Scratchmen Apoo',  email: 'sapoo@care.com',     specialite: 'Psychiatre'),
-    Medecin(id: 4, nom: 'Usopp',            email: 'usopp@care.com',     specialite: 'Ophtalmologue'),
+    Medecin(id: 4, nom: 'Usopp',            email: 'usopp@care.com',     specialite: 'Ophtalmologue'),*/
   ];
 
   @override
   void initState() { super.initState(); _chargerContactes(); }
 
   Future<void> _chargerContactes() async {
+
+    setState(() { _chargement = true;});
+
+    tous = await getMedecins();
+
+    if(tous.isNotEmpty) {
+      for (int i = 0; i < tous.length; i++) {
+        if (_specialites.contains(tous[i].specialite)) {
+          continue;
+        }
+
+        _specialites.add(tous[i].specialite);
+      }
+    }
+
     // ════════════════════════════════════════════════════════
     // TODO: _contactes = await DatabaseService.getMedecinsContactes(Session.id);
     //await Future.delayed(const Duration(milliseconds: 300));
 
-    final Messages = Hive.box("UserMessages");
+    final messages = Hive.box("UserMessages");
 
     Message? m;
 
     for(int i = 0; i < tous.length; i++)
       {
-        if(Messages.get("MessagesOf${Session.id}And${tous[i].id}") == null)
+        if(messages.get("MessagesOf${Session.id}And${tous[i].id}") == null)
           {
             continue;
           }
 
-        List<Message> list = Messages.get("MessagesOf${Session.id}And${tous[i].id}").cast<Message>();
+        List<Message> list = messages.get("MessagesOf${Session.id}And${tous[i].id}").cast<Message>();
 
         if(list.isNotEmpty)
           {
@@ -76,7 +92,9 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
           }
       }
     // ════════════════════════════════════════════════════════
-    setState(() {});
+    //setState(() {});
+
+    setState(() { _chargement = false;});
   }
 
   Future<void> _rechercher() async {

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import '../../constants.dart';
 import '../../models.dart';
+import '../../utils/messagesApi.dart';
 import '../../widgets/patient_avatar.dart';
 
 class ChatPatientScreen extends StatefulWidget {
@@ -25,23 +26,32 @@ class _ChatPatientScreenState extends State<ChatPatientScreen> {
 
   Future<void> _charger() async {
 
-    final Messages = Hive.box("UserMessages");
+    setState(() => _chargement = true);
 
-    // ════════════════════════════════════════════════════════
-    // TODO: _msgs = await DatabaseService.getMessages(Session.id!, widget.medecin.id);
-    //await Future.delayed(const Duration(milliseconds: 300));
+    final messages = Hive.box("UserMessages");
 
-    _msgs = Messages.get("MessagesOf${Session.id}And${widget.medecin.id}") != null ? Messages.get("MessagesOf${Session.id}And${widget.medecin.id}")?.cast<Message>() : _msgs;
+    List<Message> distantMessages = [];
 
-    /*_msgs = [
-      Message(id: 1, patientId: Session.id ?? 1, medecinId: widget.medecin.id, expediteur: 'patient',
-        texte: 'Bonjour, j\'aimerais savoir lkhfkjhkjdfhkjsdhfhsgdhfbsbhsdbcsbdsybdfysdfskjdfsbdfbsdfjhsbjdhbfjsdbfhsbdjfsbhdjfbhsdjfhbsdjfhbsjdfh.',
-        dateEnvoi: DateTime(2026, 2, 26, 17, 0)),
-      Message(id: 2, patientId: Session.id ?? 1, medecinId: widget.medecin.id, expediteur: 'medecin',
-        texte: 'Bonjour, j\'aimerais savoir lkhfkjhkjdfhkjsdhfhsgdhfbsbhsdbcsbdsybdfysdfskjdfsbdfbsdfjhsbjdhbfjsdbfhsbdjfsbhdjfbhsdjfhbsdjfhbsjdfh.',
-        dateEnvoi: DateTime(2026, 2, 26, 21, 17)),
-    ];*/
-    // ════════════════════════════════════════════════════════
+    distantMessages = await getMessages(Session.id ?? 0, widget.medecin.id);
+
+    _msgs = messages.get("MessagesOf${Session.id}And${widget.medecin.id}") != null ? messages.get("MessagesOf${Session.id}And${widget.medecin.id}")?.cast<Message>() : _msgs;
+
+    if(distantMessages.isNotEmpty && distantMessages.length > _msgs.length)
+    {
+      for(int i = _msgs.length; i < distantMessages.length; i++)
+        {
+         setState(() {
+           _msgs.add(distantMessages[i]);
+         });
+        }
+    }
+    else
+      {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text("Pas de nouveaux messages.")));
+        }
+      }
 
     setState(() => _chargement = false);
     _scrollBas();
@@ -51,20 +61,44 @@ class _ChatPatientScreenState extends State<ChatPatientScreen> {
     if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
   });
 
-  void _envoyer() {
+  void _envoyer() async{
 
-    final Messages = Hive.box("UserMessages");
+    setState(() => _chargement = true);
+
+    final messages = Hive.box("UserMessages");
 
     final t = _ctrl.text.trim();
     if (t.isEmpty) return;
-    final m = Message(id: DateTime.now().millisecondsSinceEpoch, patientId: Session.id ?? 1, medecinId: widget.medecin.id, expediteur: 'patient', texte: t, dateEnvoi: DateTime.now());
-    // TODO: await DatabaseService.insererMessage(m);
+    final m = Message(id: DateTime.now().millisecondsSinceEpoch, patientId: Session.id ?? 0, medecinId: widget.medecin.id, expediteur: 'patient', texte: t, dateEnvoi: DateTime.now());
+
+    bool res = await sendMessage(m);
+
     setState(() => _msgs.add(m));
 
-    Messages.put("MessagesOf${Session.id}And${widget.medecin.id}", _msgs);
+    if(res == true)
+      {
+        setState(() => _chargement = false);
 
-    _ctrl.clear();
-    _scrollBas();
+        messages.put("MessagesOf${Session.id}And${widget.medecin.id}", _msgs);
+
+        _ctrl.clear();
+        _scrollBas();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text("Message envoyé.")));
+        }
+      }
+    else {
+
+      setState((){_chargement = false; _msgs.remove(m);});
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("Erreur lors de l'envoi du message.")));
+      }
+    }
+
   }
 
   String _heure(DateTime d) => '${d.hour.toString().padLeft(2,'0')}:${d.minute.toString().padLeft(2,'0')}';
