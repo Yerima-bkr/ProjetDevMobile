@@ -1,17 +1,18 @@
-# suivie
+# CARE
 
-A new Flutter project.
+Un projet d'un groupe d'étudiants de l'IUT de Ngaoundéré. Celui-ci consiste à développer une application
+mobile dans le cadre du cours de développement mobile, cela suivant le thème :  
+**_" Suivi préventif et curatif d’un patient de façon personnelle ou
+sous le contrôle d’un médecin "_**
 
-## Getting Started
+Pour le faire, nous avons établis les objectifs suivants :
 
-This project is a starting point for a Flutter application.
+## Objectifs
 
-A few resources to get you started if this is your first Flutter project:
+- Permettre un contact direct avec des experts dès les premiers signes de maladie **_(Suivie préventif) ;_**
+- Permettre à des experts du domaine médical de facilement prescrire des médicaments aux patients **_(Suivie curatif) ._**
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Technologies Utilisées
+- Le Framework Flutter (Langage de programmation Dart) ;
+- Une base de données locale HIVE et une autre distante POSTGRES ;
+- Une API rest faite avec JavaScript (Squilize), et hébergée sur Render
