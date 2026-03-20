@@ -16,3 +16,6 @@ Pour le faire, nous avons établis les objectifs suivants :
 - Le Framework Flutter (Langage de programmation Dart) ;
 - Une base de données locale HIVE et une autre distante POSTGRES ;
 - Une API rest faite avec JavaScript (Squilize), et hébergée sur Render
+
+## Lien vers le fichier APK :  
+https://1drv.ms/u/c/3716b0d1d682802e/IQBLDTtAj8iDT55Von51epjmATB2Ojdu1C18rJgJfFIjnZw
