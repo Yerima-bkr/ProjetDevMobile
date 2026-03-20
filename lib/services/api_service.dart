@@ -23,15 +23,17 @@ class ApiService {
         final data = jsonDecode(response.body);
         final user = data['user'];
 
+        final roleStr = user['role']?.toString().toLowerCase();
+print(roleStr);
         Session.connecter(
           id: user['id'],
           nom: user['nom'],
           email: user['email'],
-          role: user['role'] != null ? RoleUtilisateur.medecin : RoleUtilisateur.patient,
+          role: roleStr == 'medecin' ? RoleUtilisateur.medecin : RoleUtilisateur.patient,
           token: data['token']
         );
 
-        if(user['role'] == null){
+        if(roleStr == null || roleStr == 'patient'){
           Patient test = await getPatient(user['id']);
 
           Session.connectedPatient = Patient(

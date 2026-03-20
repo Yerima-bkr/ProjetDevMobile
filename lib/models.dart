@@ -219,10 +219,10 @@ class Message extends HiveObject{
     return {
       'PatientId': patientId,
       'medecinId': medecinId,
-      'expediteur': expediteur == "patient" ? "0" : "1",
+      'expediteur': expediteur == "patient" ? 0 : 1,
       'text': texte,
       'dateEnvoi': dateEnvoi.toIso8601String(),
-      'lu': lu
+      'lu': lu.toString()
     };
   }
 

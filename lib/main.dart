@@ -60,7 +60,7 @@ class CareApp extends StatelessWidget {
 
           // ── REDIRECTION APRÈS LOGIN ────────────────────────
           case '/accueil':
-            return _route(Session.estMedecin ? const HomeScreen() : const PatientHomeScreen());
+            return _route(Session.role == RoleUtilisateur.medecin ? const HomeScreen() : const PatientHomeScreen());
 
           // ── MÉDECIN ───────────────────────────────────────
           case '/medecin/home':

@@ -7,7 +7,7 @@ import 'package:suivie/models.dart';
 Future<List<Message>> getMessages(int patientId, int medecinId) async {
 
   print('Got here. IdPatient : $patientId IdMedecin : $medecinId');
-  final response = await http.get(Uri.parse('https://care-gsn2.onrender.com/api/messages/get-by-user/$patientId/$medecinId'));
+  final response = await http.get(Uri.parse('https://care-gsn2.onrender.com/api/messages/get-by-user/${patientId.toString()}/${medecinId.toString()}'));
   print('And here');
   if (response.statusCode == 200) {
     List jsonResponse = json.decode(response.body);
