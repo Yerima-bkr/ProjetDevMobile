@@ -135,7 +135,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     showToggle: true,
                     onToggle: () => setState(() => _mdpVisible = !_mdpVisible),
                     validator: (v) =>
-                        v != null && v.length < 6 ? "6 caractères min." : null,
+                        v != null && v.length < 8 ? "8 caractères min." : null,
                   ),
                   const SizedBox(height: 16),
 

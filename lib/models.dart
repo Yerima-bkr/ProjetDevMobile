@@ -195,6 +195,30 @@ class Message extends HiveObject{
     this.lu = false,
   });
 
+
+  factory Message.fromJson(Map<String, dynamic> json) {
+    return Message(
+        id: int.parse(json['id']),
+        patientId: int.parse(json['PatientId']),
+        medecinId: int.parse(json['medecinId']),
+        expediteur: json['expediteur'] == "0" ? "patient" : "medecin",
+        texte: json['text'],
+        dateEnvoi: DateTime.parse(json['dateEnvoi']),
+        lu: bool.parse(json['lu']));
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id.toString(),
+      'PatientId': patientId.toString(),
+      'medecinId': medecinId.toString(),
+      'expediteur': expediteur == "patient" ? "0" : "1",
+      'text': texte,
+      'dateEnvoi': dateEnvoi.toIso8601String(),
+      'lu': lu.toString()
+    };
+  }
+
 }
 // ── Message du bot───────────────────────────────────────────────────
 @HiveType(typeId: 0)
